@@ -3,6 +3,8 @@
 import sys
 import optparse
 import resource
+import subprocess
+import tempfile 
 
 __VERSION__ = '1.0.0'
 
@@ -31,7 +33,43 @@ def parse_args():
 
     return options
 
-def get_memory_usage():
+
+def get_pids():
+
+    output = tempfile.TemporaryFile()
+    procname = "httpd"
+
+    proc = subprocess.Popen(['pgrep',procname], stdout=output)
+    proc.wait()
+    output.seek(0)
+
+    for line in output.readlines():
+
+        pid = line.strip()
+        print pid
+
+def get_rss_sum():
+
+    output = tempfile.TemporaryFile()
+    path = '/proc/3536/smaps'
+    pid = 3536
+    command = "cat /proc/3536/smaps | grep -e ^Rss: | awk '{print $2}'"
+    memtotal = 0
+
+    proc = subprocess.Popen(['cat',path], stdout=output)
+    proc.wait()
+    output.seek(0)
+
+    for line in output.readlines():
+
+        temp = subprocess.check_output(command,shell=True).split()
+
+        for s in temp:
+            memtotal += int(s)
+        print memtotal
+        break
+
+
 
 
 def main():
@@ -41,4 +79,4 @@ def main():
 
     print options.procname
 
-main()
+get_rss_sum()
