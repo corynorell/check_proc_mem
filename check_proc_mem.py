@@ -8,9 +8,11 @@ import tempfile
 
 __VERSION__ = '1.0.0'
 
+pidlist = []
+
 def parse_args():
 
-    options = dict()
+    global options
 
     version = 'check_proc_mem.py, Version %s' %__VERSION__
 
@@ -25,11 +27,11 @@ def parse_args():
     if not options.procname:
         parser.error("Process name is required for use")
 
-    if not options.warning:
-	parser.error("Warning threshold is required for use")
+#    if not options.warning:
+#	parser.error("Warning threshold is required for use")
 
-    if not options.critical:
-	parser.error("Critical threshold is required for use")
+#    if not options.critical:
+#	parser.error("Critical threshold is required for use")
 
     return options
 
@@ -37,7 +39,7 @@ def parse_args():
 def get_pids():
 
     output = tempfile.TemporaryFile()
-    procname = "httpd"
+    procname = options.procname
 
     proc = subprocess.Popen(['pgrep',procname], stdout=output)
     proc.wait()
@@ -46,7 +48,10 @@ def get_pids():
     for line in output.readlines():
 
         pid = line.strip()
-        print pid
+        pidlist.append(pid)
+        
+
+    print pidlist
 
 def get_rss_sum():
 
@@ -72,11 +77,16 @@ def get_rss_sum():
 
 
 
-def main():
-	
+def main():	
    
     options = parse_args()
+    get_pids()
 
-    print options.procname
+    for pid in pidlist:
+        print pid
 
-get_rss_sum()
+    #print options.procname
+
+
+
+main()
