@@ -22,6 +22,7 @@ def parse_args():
     parser.add_option("-p", "--procname", help="The name of the process to be checked.")
     parser.add_option("-w", "--warning", default=None, help="Warning threshold value to be passed for the check.")
     parser.add_option("-c", "--critical", default=None, help="Critical threshold vlue to be passed for the check.")
+    parser.add_option("-u", "--units", default=None, help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
 
     options, _ = parser.parse_args()    
 	
@@ -57,6 +58,9 @@ def get_rss_sum(arg1):
     output = tempfile.TemporaryFile()
     path = '/proc/%s/smaps' % (arg1)
     command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{print $2}'" % (arg1)
+
+    ## Possibly better way to do this ## command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{sum += $2} END {print sum}'" % (arg1)
+    
     global memtotal
 
     proc = subprocess.Popen(['cat',path], stdout=output)
@@ -69,7 +73,7 @@ def get_rss_sum(arg1):
         temp = subprocess.check_output(command,shell=True).split()
 
         for s in temp:
-            memtotal += int(s)
+           memtotal += int(s)
         
         break
 
@@ -83,7 +87,6 @@ def main():
         get_rss_sum(pid)
 
     print memtotal
-    #print options.procname
 
 
 main()
