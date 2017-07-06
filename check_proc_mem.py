@@ -9,6 +9,7 @@ import tempfile
 __VERSION__ = '1.0.0'
 
 pidlist = []
+memtotal = 0
 
 def parse_args():
 
@@ -51,19 +52,17 @@ def get_pids():
         pidlist.append(pid)
         
 
-    print pidlist
-
-def get_rss_sum():
+def get_rss_sum(arg1):
 
     output = tempfile.TemporaryFile()
-    path = '/proc/3536/smaps'
-    pid = 3536
-    command = "cat /proc/3536/smaps | grep -e ^Rss: | awk '{print $2}'"
-    memtotal = 0
+    path = '/proc/%s/smaps' % (arg1)
+    command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{print $2}'" % (arg1)
+    global memtotal
 
     proc = subprocess.Popen(['cat',path], stdout=output)
     proc.wait()
     output.seek(0)
+
 
     for line in output.readlines():
 
@@ -71,10 +70,8 @@ def get_rss_sum():
 
         for s in temp:
             memtotal += int(s)
-        print memtotal
+        
         break
-
-
 
 
 def main():	
@@ -83,10 +80,10 @@ def main():
     get_pids()
 
     for pid in pidlist:
-        print pid
+        get_rss_sum(pid)
 
+    print memtotal
     #print options.procname
-
 
 
 main()
