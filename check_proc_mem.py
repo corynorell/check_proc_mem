@@ -70,6 +70,8 @@ def parse_args():
 
     return options
 
+
+
 ### Converts memtotal to whatever unit of measurement the user specifies
 ### This plugin assumes that the user is going to use the same unit of measurement for both the check and the return data output
 def convert_units():
@@ -112,6 +114,8 @@ def convert_units():
     elif options.units == "nibble":
         memtotal = memtotal * 2048
 
+
+
 def check_for_procs():
     
     global processlist
@@ -130,6 +134,7 @@ def check_for_procs():
                 sys.exit(1)
             else:
                 sys.exit(1)
+
 
 
 ### Gets the PID(s) of the process specified by the -P flag
@@ -159,6 +164,8 @@ def get_pids():
 #            print ("Process(s) not found.")
 #            sys.exit(2)
 
+
+
 ### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
 
@@ -180,6 +187,8 @@ def set_check_params():
             sys.exit(1)
         else:
             sys.exit(1)
+
+
 
 ### Parses the string passes to the argument for low/high values (use on warning/critical)
 def get_thresholds(param1):
@@ -218,6 +227,8 @@ def get_thresholds(param1):
         print "Please enter a number for warning/critical values"
         sys.exit(1)
 
+
+
 ### The comparison of memtotal to the low/high values passed by the user
 def compare():
 
@@ -235,6 +246,8 @@ def compare():
             alert = True 
         else:
             alert = False
+
+
 
 ### Gets the sum of the Rss: column in the smpaps file for the corresponding PID
 ### If you would like to track a different metric, change the grep command string (e.g. ^Rss -> ^Size:)
@@ -262,6 +275,8 @@ def get_rss_sum(arg1):
         
         break
 
+
+
 ### Creates the strings needed by Nagios to properly dislpay user data and parse the performance data
 def create_return_data():
     
@@ -284,6 +299,8 @@ def create_return_data():
     fulldata = "%s | %s" % (userdata, perfdata)
 
     print fulldata
+
+
 
 def main():	
    
