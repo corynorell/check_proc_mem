@@ -48,6 +48,7 @@ def parse_args():
     parser.add_option("-c", "--critical", default=None, help="Critical threshold vlue to be passed for the check.")
     parser.add_option("-u", "--units", default="kB", help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
     parser.add_option("-V", "--version", action='store_true', help="Display the current version of check_proc_mem")
+    parser.add_option("-v", "--verbose", action='store_true', help="Display more information for troubleshooting")
 
     options, _ = parser.parse_args()    
 
@@ -111,13 +112,31 @@ def convert_units():
     elif options.units == "nibble":
         memtotal = memtotal * 2048
 
+def check_for_procs():
+    
+    global processlist
+    global options
+
+    for process in processlist:
+        output = tempfile.TemporaryFile()
+        
+        proc = subprocess.Popen(['pgrep',process], stdout=output)
+        proc.wait()
+        output.seek(0)
+
+        if not output.readlines():
+            if options.verbose:
+                print "Process %s not currently running" % (process)
+
 ### Gets the PID(s) of the process specified by the -P flag
 def get_pids():
 
     global processlist
 
     processlist = options.procname.split(',')
-    print processlist
+
+    check_for_procs()
+
     for process in processlist:
 
         output = tempfile.TemporaryFile()
@@ -133,9 +152,9 @@ def get_pids():
             pidlist.append(pid)
 
         if not pidlist:
-            print ("Process name not found.")
+            print ("Process(s) not found.")
             sys.exit(2)
-        
+
 ### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
 
