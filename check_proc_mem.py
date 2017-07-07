@@ -49,6 +49,7 @@ def parse_args():
     parser.add_option("-u", "--units", default="kB", help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
     parser.add_option("-V", "--version", action='store_true', help="Display the current version of check_proc_mem")
     parser.add_option("-v", "--verbose", action='store_true', help="Display more information for troubleshooting")
+    parser.add_option("-s", "--sum", action='store_true', help="Sum the total memory usage of all processes checked.")
 
     options, _ = parser.parse_args()    
 
@@ -295,7 +296,7 @@ def create_return_data():
         returntring = "Improper return code: %s" % (returncode)
 
     userdata = "PROC_MEM %s - Current usage = %s %s" % (returnstring, memtotal, options.units)
-    perfdata = "proc_mem=%s%s;%s;%s;" % (memtotal, options.units, warning, critical)
+    perfdata = "%s=%s%s;%s;%s;" % (options.procname, memtotal, options.units, warning, critical)
     fulldata = "%s | %s" % (userdata, perfdata)
 
     print fulldata
@@ -315,6 +316,7 @@ def main():
 
     set_check_params()
 
+    # USE TRY EXCEPT BLOCK FOR CATCHING NO WARNING/CRITICAL VALUES AND RETURNING JUST THE MEMORY USAGE
     get_thresholds(critical)
     convert_units()
     compare()
