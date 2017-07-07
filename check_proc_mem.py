@@ -11,7 +11,7 @@ __VERSION__ = '1.0.0'
 pidlist = []
 memtotal = 0
 low = 0
-high = 9999999
+high = float('inf')
 warning = ""
 critical = ""
 inclusive = False
@@ -29,7 +29,7 @@ def parse_args():
     parser.add_option("-P", "--procname", help="The name of the process to be checked.")
     parser.add_option("-w", "--warning", default=None, help="Warning threshold value to be passed for the check.")
     parser.add_option("-c", "--critical", default=None, help="Critical threshold vlue to be passed for the check.")
-    parser.add_option("-u", "--units", default=None, help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
+    parser.add_option("-u", "--units", default="kB", help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
 
     options, _ = parser.parse_args()    
 	
@@ -37,13 +37,55 @@ def parse_args():
         parser.error("Process name is required for use")
 
     if not options.warning:
-	parser.error("Warning threshold is required for use")
+    	parser.error("Warning threshold is required for use")
 
     if not options.critical:
-	parser.error("Critical threshold is required for use")
+	    parser.error("Critical threshold is required for use")
 
     return options
 
+
+def convert_units():
+    
+    global options
+    global memtotal
+
+    if options.units == "kb":
+        memtotal = memtotal * 8
+    elif options.units == "kB":
+        memtotal = memtotal
+    elif options.units == "kib":
+        memtotal = memtotal * 7.8125
+    elif options.units == "kiB":
+        memtotal = memtotal * 0.976563
+    elif options.units == "Mb":
+        memtotal = memtotal * 0.008
+    elif options.units == "MB":
+        memtotal = memtotal * 0.001
+    elif options.units == "mib":
+        memtotal = memtotal * 0.00762939
+    elif options.units == "miB":
+        memtotal = memtotal * 0.000953674
+    elif options.units == "Gb":
+        memtotal = memtotal * 0.000008192
+    elif options.units == "GB":
+        memtotal = memtotal * 0.000000954
+    elif options.units == "Gib":
+        memtotal = memtotal * 0.00000074506
+    elif options.units == "GiB":
+        memtotal = memtotal * 0.00000093132
+    elif options.units == "Tb":
+        memtotal = memtotal * 0.000000007
+    elif options.units == "TB":
+        memtotal = memtotal * 0.0000000009313225746
+    elif options.units == "Tib":
+        memtotal = memtotal * 0.00000000727596
+    elif options.units == "TiB":
+        memtotal = memtotal * 0.00000000090949
+    elif options.units == "nibble":
+        memtotal = memtotal * 2048
+    else:
+        print "Please enter a valid unit and run check_proc_mem again"
 
 def get_pids():
 
@@ -98,8 +140,8 @@ def get_thresholds(param1):
                 high = 9999999
     
     # Turn strings into ints
-    low = int(low)
-    high = int(high)
+    low = float(low)
+    high = float(high)
 
 def compare():
 
@@ -139,7 +181,7 @@ def get_rss_sum(arg1):
         temp = subprocess.check_output(command,shell=True).split()
 
         for s in temp:
-           memtotal += int(s)
+           memtotal += float(s)
         
         break
 
@@ -152,6 +194,7 @@ def create_return_data():
 def main():	
    
     global returncode
+    global options
     
     options = parse_args()
     get_pids()
@@ -161,10 +204,13 @@ def main():
 
     set_check_params()
 
-    print "Current usage: %s" % (memtotal)
+    print "Current usage: %s kB" % (memtotal)
 
     get_thresholds(critical)
+    convert_units()
     compare()
+
+    print "Converted usage: %s %s" % (memtotal, options.units)    
 
     if alert == True:
         returncode = 2
