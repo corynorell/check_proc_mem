@@ -127,6 +127,10 @@ def check_for_procs():
         if not output.readlines():
             if options.verbose:
                 print "Process %s not currently running" % (process)
+                sys.exit(1)
+            else:
+                sys.exit(1)
+
 
 ### Gets the PID(s) of the process specified by the -P flag
 def get_pids():
@@ -151,9 +155,9 @@ def get_pids():
             pid = line.strip()
             pidlist.append(pid)
 
-        if not pidlist:
-            print ("Process(s) not found.")
-            sys.exit(2)
+#        if not pidlist:
+#            print ("Process(s) not found.")
+#            sys.exit(2)
 
 ### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
@@ -163,6 +167,19 @@ def set_check_params():
 
     warning = options.warning
     critical = options.critical
+
+    if '-' in warning:
+        if options.verbose:
+            print "CANT HAVE A NEGATIVE WARNING"
+            sys.exit(1)
+        else:
+            sys.exit(1)
+    elif '-' in critical:
+        if optons.verbose:
+            print "CANT HAVE A NEGATIVE CRITICAL"
+            sys.exit(1)
+        else:
+            sys.exit(1)
 
 ### Parses the string passes to the argument for low/high values (use on warning/critical)
 def get_thresholds(param1):
@@ -192,10 +209,14 @@ def get_thresholds(param1):
                     high = brokenstring[1]
             except IndexError:
                 high = float('inf')
-    
+
     # Turn strings into floats
-    low = float(low)
-    high = float(high)
+    try:
+        low = float(low)
+        high = float(high)
+    except ValueError:
+        print "Please enter a number for warning/critical values"
+        sys.exit(1)
 
 ### The comparison of memtotal to the low/high values passed by the user
 def compare():
