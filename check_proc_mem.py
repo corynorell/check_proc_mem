@@ -15,6 +15,7 @@ __VERSION__ = '1.0.0a'
 ###############################
 
 pidlist = []
+processlist = []
 memtotal = 0
 low = 0
 high = float('inf')
@@ -113,21 +114,27 @@ def convert_units():
 ### Gets the PID(s) of the process specified by the -P flag
 def get_pids():
 
-    output = tempfile.TemporaryFile()
-    procname = options.procname
+    global processlist
 
-    proc = subprocess.Popen(['pgrep',procname], stdout=output)
-    proc.wait()
-    output.seek(0)
+    processlist = options.procname.split(',')
+    print processlist
+    for process in processlist:
 
-    for line in output.readlines():
+        output = tempfile.TemporaryFile()
+        procname = process
 
-        pid = line.strip()
-        pidlist.append(pid)
+        proc = subprocess.Popen(['pgrep',procname], stdout=output)
+        proc.wait()
+        output.seek(0)
 
-    if not pidlist:
-        print ("Process name not found.")
-        sys.exit(2)
+        for line in output.readlines():
+
+            pid = line.strip()
+            pidlist.append(pid)
+
+        if not pidlist:
+            print ("Process name not found.")
+            sys.exit(2)
         
 ### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
