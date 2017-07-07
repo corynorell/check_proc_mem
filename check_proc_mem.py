@@ -6,7 +6,13 @@ import resource
 import subprocess
 import tempfile 
 
-__VERSION__ = '1.0.0'
+__VERSION__ = '1.0.0a'
+
+
+
+###############################
+###        VARIABLES        ###
+###############################
 
 pidlist = []
 memtotal = 0
@@ -17,7 +23,17 @@ critical = ""
 inclusive = False
 alert = False
 returncode = 1
+fulldata = ""
+returnstring = ""
+allowedunits = ["kb", "kB", "kib", "kiB", "Mb", "MB", "Mib", "MiB", "Gb", "GB", "Gib", "GiB", "Tb", "TB", "Tib", "TiB", "nibble"]
 
+
+
+###############################
+###        FUNCTIONS        ###
+###############################
+
+### Gets any options passed to the plugin by the user  
 def parse_args():
 
     global options
@@ -30,8 +46,13 @@ def parse_args():
     parser.add_option("-w", "--warning", default=None, help="Warning threshold value to be passed for the check.")
     parser.add_option("-c", "--critical", default=None, help="Critical threshold vlue to be passed for the check.")
     parser.add_option("-u", "--units", default="kB", help="The unit prefix (k, Ki, M, Mi, G, Gi, T, Ti) for b and B unit types which calculates the value returned.")
+    parser.add_option("-V", "--version", action='store_true', help="Display the current version of check_proc_mem")
 
     options, _ = parser.parse_args()    
+
+    if options.version:
+        print(version)
+        sys.exit(0)
 	
     if not options.procname:
         parser.error("Process name is required for use")
@@ -41,10 +62,14 @@ def parse_args():
 
     if not options.critical:
 	    parser.error("Critical threshold is required for use")
+    
+    if not options.units in allowedunits:
+        parser.error("Please enter a valid unit")
 
     return options
 
-
+### Converts memtotal to whatever unit of measurement the user specifies
+### This plugin assumes that the user is going to use the same unit of measurement for both the check and the return data output
 def convert_units():
     
     global options
@@ -84,9 +109,8 @@ def convert_units():
         memtotal = memtotal * 0.00000000090949
     elif options.units == "nibble":
         memtotal = memtotal * 2048
-    else:
-        print "Please enter a valid unit and run check_proc_mem again"
 
+### Gets the PID(s) of the process specified by the -P flag
 def get_pids():
 
     output = tempfile.TemporaryFile()
@@ -100,8 +124,12 @@ def get_pids():
 
         pid = line.strip()
         pidlist.append(pid)
-        
 
+    if not pidlist:
+        print ("Process name not found.")
+        sys.exit(2)
+        
+### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
 
     global warning
@@ -110,7 +138,7 @@ def set_check_params():
     warning = options.warning
     critical = options.critical
 
-
+### Parses the string passes to the argument for low/high values (use on warning/critical)
 def get_thresholds(param1):
 
     global low
@@ -133,16 +161,17 @@ def get_thresholds(param1):
             low = brokenstring[0]
             try:
                 if brokenstring[1] == "":
-                    high = 9999999
+                    high = float('inf')
                 else:
                     high = brokenstring[1]
             except IndexError:
-                high = 9999999
+                high = float('inf')
     
-    # Turn strings into ints
+    # Turn strings into floats
     low = float(low)
     high = float(high)
 
+### The comparison of memtotal to the low/high values passed by the user
 def compare():
 
     global alert
@@ -160,14 +189,15 @@ def compare():
         else:
             alert = False
 
-
+### Gets the sum of the Rss: column in the smpaps file for the corresponding PID
+### If you would like to track a different metric, change the grep command string (e.g. ^Rss -> ^Size:)
 def get_rss_sum(arg1):
 
     output = tempfile.TemporaryFile()
     path = '/proc/%s/smaps' % (arg1)
     command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{print $2}'" % (arg1)
 
-    ## Possibly better way to do this ## command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{sum += $2} END {print sum}'" % (arg1)
+    ## Possibly better way to do this - credit Sebastian ## command = "cat /proc/%s/smaps | grep -e ^Rss: | awk '{sum += $2} END {print sum}'" % (arg1)
     
     global memtotal
 
@@ -185,11 +215,28 @@ def get_rss_sum(arg1):
         
         break
 
+### Creates the strings needed by Nagios to properly dislpay user data and parse the performance data
 def create_return_data():
     
-    userdata = "PROC_MEM %s - Current usage = %s %s" % (returncode, memtotal, units)
-    perfdata = "proc_mem=%s %s;%s;%s;" % (memtotal, units, warning, critical)
+    global returnstring
+    global options
+
+    if returncode == 0:
+        returnstring = "OK"
+    elif returncode == 1:
+        returnstring = "WARNING"
+    elif returncode == 2:
+        returnstring = "CRITICAL"
+    elif returncode == 3:
+        returnstring = "UNKOWN"
+    else:
+        returntring = "Improper return code: %s" % (returncode)
+
+    userdata = "PROC_MEM %s - Current usage = %s %s" % (returnstring, memtotal, options.units)
+    perfdata = "proc_mem=%s%s;%s;%s;" % (memtotal, options.units, warning, critical)
     fulldata = "%s | %s" % (userdata, perfdata)
+
+    print fulldata
 
 def main():	
    
@@ -204,13 +251,10 @@ def main():
 
     set_check_params()
 
-    print "Current usage: %s kB" % (memtotal)
-
     get_thresholds(critical)
     convert_units()
     compare()
 
-    print "Converted usage: %s %s" % (memtotal, options.units)    
 
     if alert == True:
         returncode = 2
@@ -223,7 +267,7 @@ def main():
             returncode = 0    
 
     
+    create_return_data()
 
 main()
-print returncode
 sys.exit(returncode)
