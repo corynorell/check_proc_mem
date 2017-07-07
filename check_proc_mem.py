@@ -16,6 +16,7 @@ warning = ""
 critical = ""
 inclusive = False
 alert = False
+returncode = 1
 
 def parse_args():
 
@@ -142,9 +143,16 @@ def get_rss_sum(arg1):
         
         break
 
+def create_return_data():
+    
+    userdata = "PROC_MEM %s - Current usage = %s %s" % (returncode, memtotal, units)
+    perfdata = "proc_mem=%s %s;%s;%s;" % (memtotal, units, warning, critical)
+    fulldata = "%s | %s" % (userdata, perfdata)
 
 def main():	
    
+    global returncode
+    
     options = parse_args()
     get_pids()
 
@@ -159,13 +167,17 @@ def main():
     compare()
 
     if alert == True:
-        print "CRITICAL"
+        returncode = 2
     else:
         get_thresholds(warning)
         compare()
         if alert == True:
-            print "WARNING"
+            returncode = 1
         else:
-            print "Saul Goodman"    
+            returncode = 0    
+
+    
 
 main()
+print returncode
+sys.exit(returncode)
