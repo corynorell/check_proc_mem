@@ -293,7 +293,7 @@ def create_return_data():
     elif returncode == 3:
         returnstring = "UNKOWN"
     else:
-        returntring = "Improper return code: %s" % (returncode)
+        returnstring = "Improper return code: %s" % (returncode)
 
     userdata = "PROC_MEM %s - Current usage = %s %s" % (returnstring, memtotal, options.units)
     perfdata = "%s=%s%s;%s;%s;" % (options.procname, memtotal, options.units, warning, critical)
