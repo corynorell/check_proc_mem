@@ -137,7 +137,6 @@ def check_for_procs():
                 sys.exit(1)
 
 
-
 ### Gets the PID(s) of the process specified by the -P flag
 def get_pids():
 
@@ -166,6 +165,8 @@ def get_pids():
 #            sys.exit(2)
 
 
+    if options.verbose:
+        print "The following PID's have been found: %s" % (pidlist)
 
 ### Assigns the user entered warning and critical strings to variables  
 def set_check_params():
@@ -295,7 +296,7 @@ def create_return_data():
     else:
         returnstring = "Improper return code: %s" % (returncode)
 
-    userdata = "PROC_MEM %s - Current usage = %s %s" % (returnstring, memtotal, options.units)
+    userdata = "PROC_MEM %s - Current total usage (sum) = %s %s" % (returnstring, memtotal, options.units)
     perfdata = "%s=%s%s;%s;%s;" % (options.procname, memtotal, options.units, warning, critical)
     fulldata = "%s | %s" % (userdata, perfdata)
 
